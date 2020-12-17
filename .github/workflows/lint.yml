@@ -1,0 +1,21 @@
+name: Lint
+
+on: pull_request
+
+jobs:
+  eslint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - run: rm -f .yarnclean
+      - run: yarn
+        env:
+          HUSKY_SKIP_INSTALL: true
+      # Alternative: if you use npm instead of yarn
+      # - run: npm ci --no-audit --prefer-offline
+      - run: yarn eslint
