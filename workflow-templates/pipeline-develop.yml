@@ -8,8 +8,8 @@ env:
 
 jobs:
   deploy_zip:
-    name: deploy lambda function
-    runs-on: macos-latest
+    name: Deploy Lambda Function
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version:
@@ -19,6 +19,12 @@ jobs:
       - name: Get Repository name
         run: echo "REPOSITORY_NAME=$(echo $GITHUB_REPOSITORY | awk -F / '{print $2}')" >> $GITHUB_ENV
         shell: bash
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
@@ -30,28 +36,17 @@ jobs:
 
       - name: Get Common SSM parameters
         uses: deptno/action-aws-ssm-to-dotenv@v1.3.1
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
         with:
           ssm-path: /${{ env.LAMBDA_ENVIRONMENT }}/lambda/commons/
           format: dotenv
           output: .env.${{ env.LAMBDA_ENVIRONMENT }}
-      - name: Get Specific SSM parameters
+      - name: Get APP Specific SSM parameters
         uses: deptno/action-aws-ssm-to-dotenv@v1.3.1
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
         with:
           ssm-path: /${{ env.LAMBDA_ENVIRONMENT }}/lambda/${{env.REPOSITORY_NAME}}/
           format: dotenv
           output: .env.${{ env.LAMBDA_ENVIRONMENT }}
-      - name: Install serverless
-        run: npm install -g serverless@2.x
       - name: serverless deploy
-        run: serverless deploy --stage ${{env.LAMBDA_ENVIRONMENT}}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        uses: serverless/github-action@v1.53.0
+        with:
+          args: deploy --stage ${{env.LAMBDA_ENVIRONMENT}}
