@@ -1,0 +1,9 @@
+{
+    "name": "Lambda Staging Pipeline Workflow",
+    "description": "MatchBox Organization CI workflow template.",
+    "iconName": "build",
+    "filePatterns": [
+        "package.json$",
+        "serverless.json$"
+    ]
+}
